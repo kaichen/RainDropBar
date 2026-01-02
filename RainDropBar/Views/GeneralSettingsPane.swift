@@ -143,6 +143,7 @@ struct SyncProgressView: View {
 extension Settings.PaneIdentifier {
     static let general = Self("general")
     static let advanced = Self("advanced")
+    static let about = Self("about")
 }
 
 func GeneralSettingsPaneController() -> SettingsPane {

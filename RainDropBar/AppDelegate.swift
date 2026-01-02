@@ -7,19 +7,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var settingsWindowController = SettingsWindowController(
         panes: [
             GeneralSettingsPaneController(),
-            AdvancedSettingsPaneController()
+            AdvancedSettingsPaneController(),
+            AboutSettingsPaneController()
         ],
         style: .toolbarItems,
-        // NOTE: SwiftUI `Form(.grouped)` uses an underlying NSVisualEffectView-backed hierarchy.
-        // When combined with SettingsWindowController's cross-fade transitions + window resizing,
-        // macOS can occasionally leave a "frosted" overlay artifact under the toolbar on first show
-        // or when switching panes. Disabling animation avoids overlapping effect-view layers.
         animated: false,
         hidesToolbarForSingleItem: true
     )
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
+        NSApp.setActivationPolicy(.accessory)
         debugLog(.app, "AppDelegate initialized")
     }
     
@@ -30,9 +28,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         DispatchQueue.main.async {
             debugLog(.ui, "showSettings presenting SettingsWindowController")
+            NSApp.setActivationPolicy(.regular)
             self.settingsWindowController.show()
             NSApp.activate(ignoringOtherApps: true)
+            
+            if let window = self.settingsWindowController.window {
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(self.settingsWindowWillClose(_:)),
+                    name: NSWindow.willCloseNotification,
+                    object: window
+                )
+            }
         }
+    }
+    
+    @objc private func settingsWindowWillClose(_ notification: Notification) {
+        debugLog(.ui, "Settings window closing, reverting to .accessory")
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: notification.object)
+        NSApp.setActivationPolicy(.accessory)
     }
     
     @MainActor
