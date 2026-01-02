@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct RainDropBarApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    
     private var sharedModelContainer: ModelContainer? = {
         debugLog(.app, "RainDropBar launching")
         
@@ -36,6 +38,10 @@ struct RainDropBarApp: App {
             }
             
             debugLog(.swiftdata, "ModelContainer created successfully")
+            
+            SyncService.shared.configure(modelContainer: container)
+            SyncService.shared.startOnLaunchIfPossible()
+            
             return container
         } catch {
             debugLog(.swiftdata, "ModelContainer creation failed: \(error.localizedDescription)")
@@ -53,10 +59,6 @@ struct RainDropBarApp: App {
             }
         }
         .menuBarExtraStyle(.window)
-        
-        Settings {
-            SettingsView()
-        }
     }
     
     private func resetDatabase() {

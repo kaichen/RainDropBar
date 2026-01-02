@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		10C330B42F07B6F00066ED53 /* Settings in Frameworks */ = {isa = PBXBuildFile; productRef = 10A000022F07A00000000002 /* Settings */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		103C91272F0799F000852C95 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10C330B42F07B6F00066ED53 /* Settings in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = RainDropBar;
 			packageProductDependencies = (
+				10A000022F07A00000000002 /* Settings */,
 			);
 			productName = RainDropBar;
 			productReference = 103C91172F0799EF00852C95 /* RainDropBar.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 103C910E2F0799EF00852C95;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				10A000012F07A00000000001 /* XCRemoteSwiftPackageReference "Settings" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 103C91182F0799EF00852C95 /* Products */;
 			projectDirPath = "";
@@ -575,6 +584,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		10A000012F07A00000000001 /* XCRemoteSwiftPackageReference "Settings" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Settings";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		10A000022F07A00000000002 /* Settings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10A000012F07A00000000001 /* XCRemoteSwiftPackageReference "Settings" */;
+			productName = Settings;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 103C910F2F0799EF00852C95 /* Project object */;
 }

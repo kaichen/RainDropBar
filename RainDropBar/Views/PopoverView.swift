@@ -7,10 +7,10 @@
 
 import SwiftUI
 import SwiftData
+import AppKit
 
 struct PopoverView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.openSettings) private var openSettings
     
     @Query(sort: \Raindrop.created, order: .reverse) private var raindrops: [Raindrop]
     @Query private var collections: [RaindropCollection]
@@ -71,7 +71,7 @@ struct PopoverView: View {
             
             // Status bar
             StatusBar(syncService: syncService, onSettings: {
-                openSettings()
+                (NSApp.delegate as? AppDelegate)?.showSettings()
             }, onSync: {
                 Task {
                     try? await syncService.sync()
@@ -82,18 +82,6 @@ struct PopoverView: View {
         .onAppear {
             debugLog(.ui, "PopoverView appeared")
             debugLog(.ui, "Raindrops count: \(raindrops.count), Collections count: \(collections.count)")
-            
-            syncService.configure(modelContext: modelContext)
-            let hasToken = TokenManager.shared.hasToken
-            debugLog(.ui, "Token present: \(hasToken)")
-            
-            if hasToken {
-                debugLog(.ui, "Triggering initial sync")
-                Task {
-                    try? await syncService.sync()
-                }
-                syncService.startAutoSync()
-            }
         }
     }
     
@@ -108,7 +96,7 @@ struct PopoverView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Button("Open Settings") {
-                openSettings()
+                (NSApp.delegate as? AppDelegate)?.showSettings()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

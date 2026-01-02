@@ -18,9 +18,11 @@ final class SyncService {
     var error: Error?
     var syncProgress: String?
     
-    private var modelContext: ModelContext?
+    private var modelContainer: ModelContainer?
+    private var engine: SyncEngine?
     private var syncTimer: Timer?
     private var backgroundTask: Task<Void, Never>?
+    private var isConfigured = false
     private let initialLoadLimit = 1000
     
     static let shared = SyncService()
@@ -30,12 +32,44 @@ final class SyncService {
         debugLog(.sync, "SyncService initialized")
     }
     
-    func configure(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    func configure(modelContainer: ModelContainer) {
+        guard !isConfigured else {
+            debugLog(.sync, "SyncService already configured, skipping")
+            return
+        }
+        self.modelContainer = modelContainer
+        self.engine = SyncEngine(container: modelContainer)
+        self.isConfigured = true
+        debugLog(.sync, "SyncService configured with ModelContainer")
     }
     
-    func startAutoSync(interval: TimeInterval = 900) { // 15 minutes
+    func startOnLaunchIfPossible() {
+        guard isConfigured else {
+            debugLog(.sync, "startOnLaunchIfPossible: not configured")
+            return
+        }
+        
+        guard TokenManager.shared.hasToken else {
+            debugLog(.sync, "startOnLaunchIfPossible: no token")
+            return
+        }
+        
+        debugLog(.sync, "startOnLaunchIfPossible: starting sync and timer")
+        
+        startAutoSync()
+        
+        Task.detached { [weak self] in
+            do {
+                try await self?.sync()
+            } catch {
+                debugLog(.sync, "Launch sync failed: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func startAutoSync(interval: TimeInterval = 900) {
         stopAutoSync()
+        debugLog(.sync, "Starting auto-sync timer (interval: \(interval)s)")
         syncTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 try? await self?.sync()
@@ -51,11 +85,13 @@ final class SyncService {
     func sync() async throws {
         guard let token = TokenManager.shared.token else {
             debugLog(.sync, "Sync failed: no token")
+            self.error = SyncError.noToken
             throw SyncError.noToken
         }
         
-        guard let modelContext else {
-            debugLog(.sync, "Sync failed: no model context")
+        guard let engine else {
+            debugLog(.sync, "Sync failed: no engine (not configured)")
+            self.error = SyncError.noModelContext
             throw SyncError.noModelContext
         }
         
@@ -97,14 +133,14 @@ final class SyncService {
         
         do {
             syncProgress = "Saving data..."
-            debugLog(.sync, "Phase 3: Saving to SwiftData")
-            try syncCollections(collectionsResponse, in: modelContext)
-            try syncRaindrops(raindropsResponse, in: modelContext, deleteOrphans: false)
-            try modelContext.save()
+            debugLog(.sync, "Phase 3: Saving to SwiftData (background)")
+            try await engine.applyInitialSync(
+                collections: collectionsResponse,
+                raindrops: raindropsResponse
+            )
             debugLog(.sync, "Data saved successfully")
         } catch {
             debugLog(.sync, "Save error: \(error.localizedDescription)")
-            modelContext.rollback()
             self.error = error
             throw error
         }
@@ -122,17 +158,19 @@ final class SyncService {
     
     private func startBackgroundSync(startPage: Int, token: String) {
         backgroundTask?.cancel()
-        backgroundTask = Task { [weak self] in
-            guard let self else { return }
-            
+        
+        guard let engine else { return }
+        
+        backgroundTask = Task.detached { [weak self] in
             await MainActor.run {
-                self.isBackgroundSyncing = true
+                self?.isBackgroundSyncing = true
             }
             debugLog(.sync, "Background sync started from page \(startPage)")
             
             let api = RaindropAPI(token: token)
             var page = startPage
             var totalFetched = 0
+            var raindropIndex: [Int: Raindrop] = [:]
             
             do {
                 while !Task.isCancelled {
@@ -142,15 +180,7 @@ final class SyncService {
                     totalFetched += response.items.count
                     debugLog(.sync, "Background page \(page): fetched \(response.items.count) items, total: \(totalFetched)")
                     
-                    await MainActor.run {
-                        guard let ctx = self.modelContext else { return }
-                        do {
-                            try self.syncRaindrops(response.items, in: ctx, deleteOrphans: false)
-                            try ctx.save()
-                        } catch {
-                            debugLog(.sync, "Background save error: \(error.localizedDescription)")
-                        }
-                    }
+                    try await engine.applyRaindropPage(response.items, existingIndex: &raindropIndex)
                     
                     if response.items.count < 50 { break }
                     page += 1
@@ -161,113 +191,8 @@ final class SyncService {
             }
             
             await MainActor.run {
-                self.isBackgroundSyncing = false
+                self?.isBackgroundSyncing = false
             }
-        }
-    }
-    
-    private func syncCollections(_ responses: [CollectionResponse], in context: ModelContext) throws {
-        // Fetch all existing collections
-        let existingCollections = try context.fetch(FetchDescriptor<RaindropCollection>())
-        let existingByID = Dictionary(uniqueKeysWithValues: existingCollections.map { ($0.id, $0) })
-        
-        let remoteIDs = Set(responses.map { $0.id })
-        
-        for response in responses {
-            if let existing = existingByID[response.id] {
-                // Update existing
-                existing.title = response.title
-                existing.count = response.count
-                existing.cover = response.cover.first ?? ""
-                existing.color = response.color ?? ""
-                existing.parentID = response.parent?.id
-                existing.sortOrder = response.sort
-                existing.view = response.view
-                existing.isPublic = response.public
-                existing.expanded = response.expanded
-                existing.lastUpdate = response.lastUpdate
-            } else {
-                // Insert new
-                let collection = RaindropCollection(
-                    id: response.id,
-                    title: response.title,
-                    count: response.count,
-                    cover: response.cover.first ?? "",
-                    color: response.color ?? "",
-                    parentID: response.parent?.id,
-                    sortOrder: response.sort,
-                    view: response.view,
-                    isPublic: response.public,
-                    expanded: response.expanded,
-                    lastUpdate: response.lastUpdate
-                )
-                context.insert(collection)
-            }
-        }
-        
-        // Delete collections not in remote
-        for existing in existingCollections {
-            if !remoteIDs.contains(existing.id) {
-                context.delete(existing)
-            }
-        }
-    }
-    
-    private func syncRaindrops(_ responses: [RaindropResponse], in context: ModelContext, deleteOrphans: Bool = false) throws {
-        let existingRaindrops = try context.fetch(FetchDescriptor<Raindrop>())
-        let existingByID = Dictionary(uniqueKeysWithValues: existingRaindrops.map { ($0.id, $0) })
-        
-        let remoteIDs = Set(responses.map { $0.id })
-        var inserted = 0
-        var updated = 0
-        
-        for response in responses {
-            if let existing = existingByID[response.id] {
-                existing.title = response.title
-                existing.link = response.link
-                existing.excerpt = response.excerpt
-                existing.note = response.note
-                existing.domain = response.domain
-                existing.cover = response.cover
-                existing.type = response.type
-                existing.tags = response.tags
-                existing.important = response.important
-                existing.collectionID = response.collection.id
-                existing.created = response.created
-                existing.lastUpdate = response.lastUpdate
-                updated += 1
-            } else {
-                let raindrop = Raindrop(
-                    id: response.id,
-                    title: response.title,
-                    link: response.link,
-                    excerpt: response.excerpt,
-                    note: response.note,
-                    domain: response.domain,
-                    cover: response.cover,
-                    type: response.type,
-                    tags: response.tags,
-                    important: response.important,
-                    collectionID: response.collection.id,
-                    created: response.created,
-                    lastUpdate: response.lastUpdate
-                )
-                context.insert(raindrop)
-                inserted += 1
-            }
-        }
-        
-        debugLog(.swiftdata, "Raindrops: \(inserted) inserted, \(updated) updated")
-        
-        if deleteOrphans {
-            var deleted = 0
-            for existing in existingRaindrops {
-                if !remoteIDs.contains(existing.id) {
-                    context.delete(existing)
-                    deleted += 1
-                }
-            }
-            debugLog(.swiftdata, "Raindrops: \(deleted) deleted")
         }
     }
 }
