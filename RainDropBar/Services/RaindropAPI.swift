@@ -60,47 +60,28 @@ struct RaindropAPI {
         return root.items + children.items
     }
     
-    func getRaindrops(collectionID: Int = 0, page: Int = 0, perPage: Int = 50) async throws -> RaindropsResponse {
-        let path = "/raindrops/\(collectionID)?page=\(page)&perpage=\(perPage)"
+    func getRaindrops(
+        collectionID: Int = 0,
+        page: Int = 0,
+        perPage: Int = 50,
+        sort: String? = nil
+    ) async throws -> RaindropsResponse {
+        var components = URLComponents()
+        components.path = "/raindrops/\(collectionID)"
+        components.queryItems = [
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "perpage", value: "\(perPage)")
+        ]
+        if let sort {
+            components.queryItems?.append(URLQueryItem(name: "sort", value: sort))
+        }
+        let path = components.path + "?" + (components.query ?? "")
         return try await request(path)
     }
     
-    func getAllRaindrops() async throws -> [RaindropResponse] {
-        var allRaindrops: [RaindropResponse] = []
-        var page = 0
-        
-        while true {
-            let response = try await getRaindrops(page: page)
-            allRaindrops.append(contentsOf: response.items)
-            
-            if response.items.count < 50 {
-                break
-            }
-            page += 1
-        }
-        
-        return allRaindrops
-    }
-    
-    func getRecentRaindrops(limit: Int = 1000) async throws -> [RaindropResponse] {
-        var results: [RaindropResponse] = []
-        var page = 0
-        let perPage = 50
-        
-        debugLog(.api, "Fetching recent raindrops with limit: \(limit)")
-        
-        while results.count < limit {
-            let response = try await getRaindrops(page: page, perPage: perPage)
-            results.append(contentsOf: response.items)
-            debugLog(.api, "Page \(page): fetched \(response.items.count) items, total: \(results.count)")
-            
-            if response.items.count < perPage { break }
-            page += 1
-        }
-        
-        let finalResults = Array(results.prefix(limit))
-        debugLog(.api, "getRecentRaindrops completed: \(finalResults.count) items")
-        return finalResults
+    func getTotalCount(collectionID: Int = 0) async throws -> Int {
+        let response = try await getRaindrops(collectionID: collectionID, page: 0, perPage: 1)
+        return response.count ?? response.items.count
     }
     
     private func request<T: Decodable>(_ path: String, retryCount: Int = 0) async throws -> T {
@@ -132,6 +113,18 @@ struct RaindropAPI {
             throw APIError.unauthorized
         }
         
+        if (500...599).contains(httpResponse.statusCode) {
+            if retryCount < 4 {
+                let baseDelay = 0.5 * pow(2.0, Double(retryCount))
+                let jitter = Double.random(in: 0...0.3)
+                let delay = min(baseDelay + jitter, 10.0)
+                debugLog(.api, "Server error \(httpResponse.statusCode), retrying in \(String(format: "%.1f", delay))s (attempt \(retryCount + 1)/4)")
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await self.request(path, retryCount: retryCount + 1)
+            }
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
         guard (200...299).contains(httpResponse.statusCode) else {
             throw APIError.httpError(httpResponse.statusCode)
         }
@@ -141,7 +134,12 @@ struct RaindropAPI {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch let error as DecodingError {
+            debugLog(.api, "Decode failed for \(path): \(error)")
+            throw error
+        }
     }
 }
 
@@ -151,6 +149,7 @@ enum APIError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
     case httpError(Int)
+    case serverError(Int)
     case rateLimited
     case unauthorized
     
@@ -162,6 +161,8 @@ enum APIError: Error, LocalizedError {
             return "Invalid response"
         case .httpError(let code):
             return "HTTP error: \(code)"
+        case .serverError(let code):
+            return "Server error: \(code) (retries exhausted)"
         case .rateLimited:
             return "Rate limited by API"
         case .unauthorized:
@@ -241,5 +242,23 @@ struct RaindropResponse: Decodable {
         enum CodingKeys: String, CodingKey {
             case id = "$id"
         }
+    }
+    
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try c.decode(Int.self, forKey: .id)
+        title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+        link = try c.decode(String.self, forKey: .link)
+        excerpt = try c.decodeIfPresent(String.self, forKey: .excerpt) ?? ""
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        domain = try c.decodeIfPresent(String.self, forKey: .domain) ?? ""
+        cover = try c.decodeIfPresent(String.self, forKey: .cover) ?? ""
+        type = try c.decodeIfPresent(String.self, forKey: .type) ?? "link"
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
+        important = try c.decodeIfPresent(Bool.self, forKey: .important) ?? false
+        collection = try c.decode(CollectionRef.self, forKey: .collection)
+        created = try c.decodeIfPresent(Date.self, forKey: .created) ?? Date()
+        lastUpdate = try c.decodeIfPresent(Date.self, forKey: .lastUpdate) ?? created
     }
 }

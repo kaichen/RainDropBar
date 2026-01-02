@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct StatusBar: View {
     var syncService: SyncService
@@ -13,70 +14,96 @@ struct StatusBar: View {
     let onSync: () -> Void
     
     var body: some View {
-        HStack {
-            if syncService.isSyncing {
-                ProgressView()
-                    .scaleEffect(0.6)
-                if let progress = syncService.syncProgress {
-                    Text(progress)
+        HStack(spacing: 12) {
+            Group {
+                if syncService.isSyncing {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                    Text(syncService.progress.message)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                } else if let error = syncService.error {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text(error.localizedDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .help(error.localizedDescription)
+                } else if let lastSync = syncService.lastSyncTime {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(lastSync, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 } else {
-                    Text("Syncing...")
+                    Text("Not synced")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
-            } else if syncService.isBackgroundSyncing {
-                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-                    .symbolEffect(.pulse)
-                Text("Loading more...")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if let error = syncService.error {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                Text(error.localizedDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .help(error.localizedDescription)
-            } else if let lastSync = syncService.lastSyncTime {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(lastSync, style: .relative)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Not synced")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            Spacer()
-            
-            Button {
-                onSync()
-            } label: {
-                Image(systemName: "arrow.clockwise")
+            HStack(spacing: 8) {
+                Button {
+                    onSync()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .disabled(syncService.isSyncing)
+                .help("Sync now")
+                
+                Menu {
+                    Button("Settings") {
+                        onSettings()
+                    }
+                    
+                    Button("About") {
+                        showAboutAlert()
+                    }
+                    
+                    Divider()
+                    
+                    Button("Quit") {
+                        NSApp.terminate(nil)
+                    }
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .menuStyle(.borderlessButton)
+                .help("Settings")
             }
-            .buttonStyle(.borderless)
-            .disabled(syncService.isSyncing)
-            .help("Sync now")
-            
-            Button {
-                onSettings()
-            } label: {
-                Image(systemName: "gearshape")
-            }
-            .buttonStyle(.borderless)
-            .help("Settings")
+            .fixedSize()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.bar)
+    }
+}
+
+private extension StatusBar {
+    func showAboutAlert() {
+        let name = (Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String) ?? "RainDropBar"
+        let version = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "Unknown"
+        let build = (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "Unknown"
+        
+        let alert = NSAlert()
+        alert.messageText = "About \(name)"
+        alert.informativeText = "Version \(version) (\(build))"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
     }
 }

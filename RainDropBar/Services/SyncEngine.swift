@@ -16,23 +16,11 @@ actor SyncEngine {
         debugLog(.sync, "SyncEngine initialized")
     }
     
-    func applyInitialSync(
-        collections: [CollectionResponse],
-        raindrops: [RaindropResponse]
-    ) throws {
+    func syncCollections(_ responses: [CollectionResponse]) throws {
         let context = ModelContext(container)
-        
-        debugLog(.sync, "SyncEngine: applying \(collections.count) collections, \(raindrops.count) raindrops")
-        
-        try syncCollections(collections, in: context)
-        
-        let existingRaindrops = try context.fetch(FetchDescriptor<Raindrop>())
-        var indexByID = Dictionary(uniqueKeysWithValues: existingRaindrops.map { ($0.id, $0) })
-        
-        try applyRaindrops(raindrops, index: &indexByID, in: context)
-        
+        debugLog(.sync, "SyncEngine: syncing \(responses.count) collections")
+        try syncCollectionsInternal(responses, in: context)
         try context.save()
-        debugLog(.sync, "SyncEngine: initial sync saved")
     }
     
     func applyRaindropPage(
@@ -57,7 +45,15 @@ actor SyncEngine {
         return try context.fetchCount(descriptor)
     }
     
-    private func syncCollections(_ responses: [CollectionResponse], in context: ModelContext) throws {
+    func getMaxLastUpdate() throws -> Date? {
+        let context = ModelContext(container)
+        var descriptor = FetchDescriptor<Raindrop>(sortBy: [SortDescriptor(\.lastUpdate, order: .reverse)])
+        descriptor.fetchLimit = 1
+        let results = try context.fetch(descriptor)
+        return results.first?.lastUpdate
+    }
+    
+    private func syncCollectionsInternal(_ responses: [CollectionResponse], in context: ModelContext) throws {
         let existingCollections = try context.fetch(FetchDescriptor<RaindropCollection>())
         let existingByID = Dictionary(uniqueKeysWithValues: existingCollections.map { ($0.id, $0) })
         
