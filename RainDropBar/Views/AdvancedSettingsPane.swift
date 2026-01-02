@@ -9,15 +9,13 @@ struct AdvancedSettingsPane: View {
     private var syncService = SyncService.shared
     
     var body: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button("Force Full Resync") {
-                            showResyncConfirm = true
-                        }
-                        .disabled(syncService.isSyncing)
+        Settings.Container(contentWidth: 450.0) {
+            Settings.Section(title: "Sync") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Button("Force Full Resync") {
+                        showResyncConfirm = true
                     }
+                    .disabled(syncService.isSyncing)
                     
                     Text("Re-downloads all bookmarks from scratch. Use if sync is out of date.")
                         .font(.caption)
@@ -30,12 +28,10 @@ struct AdvancedSettingsPane: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
-            } header: {
-                Text("Sync")
             }
             
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
+            Settings.Section(title: "Debug Logs") {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Button("Copy Debug Logs") {
                             copyLogs()
@@ -61,12 +57,9 @@ struct AdvancedSettingsPane: View {
                         .foregroundStyle(.tertiary)
                         .textSelection(.enabled)
                 }
-            } header: {
-                Text("Debug Logs")
             }
         }
-        .formStyle(.grouped)
-        .frame(width: 450, height: 250)
+        .frame(minHeight: 220)
         .confirmationDialog("Force Full Resync?", isPresented: $showResyncConfirm) {
             Button("Resync All Bookmarks", role: .destructive) {
                 Task {

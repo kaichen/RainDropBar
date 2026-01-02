@@ -10,7 +10,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AdvancedSettingsPaneController()
         ],
         style: .toolbarItems,
-        animated: true,
+        // NOTE: SwiftUI `Form(.grouped)` uses an underlying NSVisualEffectView-backed hierarchy.
+        // When combined with SettingsWindowController's cross-fade transitions + window resizing,
+        // macOS can occasionally leave a "frosted" overlay artifact under the toolbar on first show
+        // or when switching panes. Disabling animation avoids overlapping effect-view layers.
+        animated: false,
         hidesToolbarForSingleItem: true
     )
     

@@ -10,60 +10,57 @@ struct GeneralSettingsPane: View {
     private var syncService = SyncService.shared
     
     var body: some View {
-        Form {
-            Section {
-                HStack {
-                    if showToken {
-                        TextField("Test Token", text: $token)
-                            .textFieldStyle(.roundedBorder)
-                    } else {
-                        SecureField("Test Token", text: $token)
-                            .textFieldStyle(.roundedBorder)
+        Settings.Container(contentWidth: 450.0) {
+            Settings.Section(title: "API Token") {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        if showToken {
+                            TextField("Test Token", text: $token)
+                                .textFieldStyle(.roundedBorder)
+                        } else {
+                            SecureField("Test Token", text: $token)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        Button {
+                            showToken.toggle()
+                        } label: {
+                            Image(systemName: showToken ? "eye.slash" : "eye")
+                        }
+                        .buttonStyle(.borderless)
                     }
                     
-                    Button {
-                        showToken.toggle()
-                    } label: {
-                        Image(systemName: showToken ? "eye.slash" : "eye")
-                    }
-                    .buttonStyle(.borderless)
-                }
-                
-                Text("Get your test token from [raindrop.io/settings/integrations](https://app.raindrop.io/settings/integrations)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("API Token")
-            }
-            
-            Section {
-                HStack {
-                    Button("Save") {
-                        saveToken()
-                    }
-                    .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Text("Get your test token from [raindrop.io/settings/integrations](https://app.raindrop.io/settings/integrations)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     
-                    Button("Clear Token", role: .destructive) {
-                        clearToken()
-                    }
-                    .disabled(TokenManager.shared.token == nil)
-                    
-                    if saved {
-                        Text("Saved!")
-                            .foregroundStyle(.green)
-                            .transition(.opacity)
+                    HStack {
+                        Button("Save") {
+                            saveToken()
+                        }
+                        .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        
+                        Button("Clear Token", role: .destructive) {
+                            clearToken()
+                        }
+                        .disabled(TokenManager.shared.token == nil)
+                        
+                        if saved {
+                            Text("Saved!")
+                                .foregroundStyle(.green)
+                                .transition(.opacity)
+                        }
                     }
                 }
             }
             
-            Section {
+            Settings.Section(title: "Sync") {
                 SyncProgressView()
-            } header: {
-                Text("Sync")
             }
         }
-        .formStyle(.grouped)
-        .frame(width: 450, height: 320)
+        // Protect against edge cases where the initial fittingSize becomes too small (for example, when
+        // the Sync section has minimal content). The window can still grow when content requires it.
+        .frame(minHeight: 260)
     }
     
     private func saveToken() {
