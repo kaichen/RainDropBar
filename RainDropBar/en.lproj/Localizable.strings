@@ -1,0 +1,89 @@
+/* 
+  Localizable.strings (English)
+  RainDropBar
+*/
+
+// MARK: - PopoverView
+
+"search.placeholder" = "Search bookmarks...";
+"noToken.title" = "No API Token";
+"noToken.subtitle" = "Configure your token in Settings";
+"noToken.button" = "Open Settings";
+"empty.title" = "No bookmarks";
+"empty.subtitle" = "Your bookmarks will appear here after syncing";
+
+// MARK: - StatusBar
+
+"status.notSynced" = "Not synced";
+"status.syncNow" = "Sync now";
+"menu.settings" = "Settings";
+"menu.about" = "About";
+"menu.quit" = "Quit";
+"about.title" = "About %@";
+"about.version" = "Version %@ (%@)";
+"about.repository" = "Repository: %@";
+"about.ok" = "OK";
+"about.openRepo" = "Open repository in browser";
+
+// MARK: - GeneralSettingsPane
+
+"settings.general" = "General";
+"settings.general.accessibility" = "General settings";
+"settings.apiToken" = "API Token";
+"settings.apiToken.placeholder" = "Test Token";
+"settings.apiToken.help" = "Get your test token from [raindrop.io/settings/integrations](https://app.raindrop.io/settings/integrations)";
+"settings.save" = "Save";
+"settings.clearToken" = "Clear Token";
+"settings.saved" = "Saved!";
+"settings.sync" = "Sync";
+"settings.lastSync" = "Last sync: %@ ago";
+"settings.neverSynced" = "Never synced";
+"settings.syncNow" = "Sync Now";
+"settings.cancel" = "Cancel";
+
+// MARK: - AdvancedSettingsPane
+
+"settings.advanced" = "Advanced";
+"settings.advanced.accessibility" = "Advanced settings";
+"settings.forceResync" = "Force Full Resync";
+"settings.forceResync.help" = "Re-downloads all bookmarks from scratch. Use if sync is out of date.";
+"settings.cursor" = "Cursor: %@ %@";
+"settings.debugLogs" = "Debug Logs";
+"settings.copyLogs" = "Copy Debug Logs";
+"settings.openLogFile" = "Open Log File";
+"settings.clearLogs" = "Clear Logs";
+"settings.logsCopied" = "Copied to clipboard!";
+"settings.logFile" = "Log file: %@";
+"dialog.resync.title" = "Force Full Resync?";
+"dialog.resync.button" = "Resync All Bookmarks";
+"dialog.resync.message" = "This will re-download all bookmarks. This may take a while for large libraries.";
+
+// MARK: - AboutSettingsPane
+
+"settings.about" = "About";
+"settings.about.accessibility" = "About app";
+
+// MARK: - DatabaseErrorView
+
+"databaseError.title" = "Database Error";
+"databaseError.message" = "Unable to initialize local storage. This may be due to a corrupted database or permissions issue.";
+"databaseError.reset" = "Reset Database";
+
+// MARK: - SyncProgress
+
+"sync.idle" = "Idle";
+"sync.starting" = "Starting...";
+"sync.fetchingCollections" = "Fetching collections...";
+"sync.syncingBookmarks" = "Syncing bookmarks...";
+"sync.syncingTrash" = "Syncing trash...";
+"sync.finalizing" = "Finalizing...";
+"sync.completed" = "Completed";
+"sync.cancelled" = "Cancelled";
+"sync.failed" = "Failed";
+"sync.page" = "page %d";
+"sync.items" = "%d items";
+
+// MARK: - SyncError
+
+"error.noToken" = "No API token configured";
+"error.noDatabase" = "Database not initialized";

@@ -377,9 +377,9 @@ enum SyncError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noToken:
-            return "No API token configured"
+            return String(localized: "error.noToken")
         case .noModelContext:
-            return "Database not initialized"
+            return String(localized: "error.noDatabase")
         }
     }
 }

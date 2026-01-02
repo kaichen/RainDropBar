@@ -24,7 +24,7 @@ struct AboutSettingsPane: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(name)
                                 .font(.title3.weight(.semibold))
-                            Text("Version \(version) (\(build))")
+                            Text("about.version \(version) \(build)")
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -35,7 +35,7 @@ struct AboutSettingsPane: View {
                             .foregroundStyle(.blue)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Open repository in browser")
+                    .accessibilityLabel(String(localized: "about.openRepo"))
                 }
                 .padding(.vertical, 4)
             }
@@ -47,8 +47,8 @@ struct AboutSettingsPane: View {
 func AboutSettingsPaneController() -> SettingsPane {
     let paneView = Settings.Pane(
         identifier: .about,
-        title: "About",
-        toolbarIcon: NSImage(systemSymbolName: "info.circle", accessibilityDescription: "About app")!
+        title: String(localized: "settings.about"),
+        toolbarIcon: NSImage(systemSymbolName: "info.circle", accessibilityDescription: String(localized: "settings.about.accessibility"))!
     ) {
         AboutSettingsPane()
     }

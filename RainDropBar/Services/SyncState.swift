@@ -83,16 +83,30 @@ struct SyncCheckpoint: Codable {
 
 /// Observable progress state for UI
 struct SyncProgress: Equatable {
-    enum Phase: String, Equatable {
-        case idle = "Idle"
-        case starting = "Starting..."
-        case fetchingCollections = "Fetching collections..."
-        case syncingBookmarks = "Syncing bookmarks..."
-        case syncingTrash = "Syncing trash..."
-        case finalizing = "Finalizing..."
-        case completed = "Completed"
-        case cancelled = "Cancelled"
-        case failed = "Failed"
+    enum Phase: Equatable {
+        case idle
+        case starting
+        case fetchingCollections
+        case syncingBookmarks
+        case syncingTrash
+        case finalizing
+        case completed
+        case cancelled
+        case failed
+        
+        var localizedString: String {
+            switch self {
+            case .idle: return String(localized: "sync.idle")
+            case .starting: return String(localized: "sync.starting")
+            case .fetchingCollections: return String(localized: "sync.fetchingCollections")
+            case .syncingBookmarks: return String(localized: "sync.syncingBookmarks")
+            case .syncingTrash: return String(localized: "sync.syncingTrash")
+            case .finalizing: return String(localized: "sync.finalizing")
+            case .completed: return String(localized: "sync.completed")
+            case .cancelled: return String(localized: "sync.cancelled")
+            case .failed: return String(localized: "sync.failed")
+            }
+        }
     }
     
     var phase: Phase = .idle
@@ -122,17 +136,19 @@ struct SyncProgress: Equatable {
     var message: String {
         switch phase {
         case .idle, .starting, .fetchingCollections, .finalizing, .completed, .cancelled, .failed:
-            return phase.rawValue
+            return phase.localizedString
         case .syncingBookmarks, .syncingTrash:
-            var msg = phase.rawValue
+            var msg = phase.localizedString
             if let title = currentCollectionTitle {
                 msg += " \(title)"
             }
             if let page = currentPage {
-                msg += " (page \(page + 1))"
+                let pageStr = String(format: NSLocalizedString("sync.page", comment: ""), page + 1)
+                msg += " (\(pageStr))"
             }
             if itemsApplied > 0 {
-                msg += " - \(itemsApplied) items"
+                let itemsStr = String(format: NSLocalizedString("sync.items", comment: ""), itemsApplied)
+                msg += " - \(itemsStr)"
             }
             return msg
         }

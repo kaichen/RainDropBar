@@ -10,49 +10,49 @@ struct AdvancedSettingsPane: View {
     
     var body: some View {
         Settings.Container(contentWidth: 450.0) {
-            Settings.Section(title: "Sync") {
+            Settings.Section(title: String(localized: "settings.sync")) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Button("Force Full Resync") {
+                    Button("settings.forceResync") {
                         showResyncConfirm = true
                     }
                     .disabled(syncService.isSyncing)
                     
-                    Text("Re-downloads all bookmarks from scratch. Use if sync is out of date.")
+                    Text("settings.forceResync.help")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
                     if syncService.syncState.hasCompletedFullBackfill,
                        let cursor = syncService.syncState.cursorLastUpdate {
-                        Text("Cursor: \(cursor, style: .date) \(cursor, style: .time)")
+                        Text("settings.cursor \(cursor, style: .date) \(cursor, style: .time)")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
                 }
             }
             
-            Settings.Section(title: "Debug Logs") {
+            Settings.Section(title: String(localized: "settings.debugLogs")) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Button("Copy Debug Logs") {
+                        Button("settings.copyLogs") {
                             copyLogs()
                         }
                         
-                        Button("Open Log File") {
+                        Button("settings.openLogFile") {
                             openLogFile()
                         }
                         
-                        Button("Clear Logs", role: .destructive) {
+                        Button("settings.clearLogs", role: .destructive) {
                             DebugLogger.shared.clearLogs()
                         }
                     }
                     
                     if logsCopied {
-                        Text("Copied to clipboard!")
+                        Text("settings.logsCopied")
                             .foregroundStyle(.green)
                             .transition(.opacity)
                     }
                     
-                    Text("Log file: \(DebugLogger.shared.logFilePath.path)")
+                    Text("settings.logFile \(DebugLogger.shared.logFilePath.path)")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .textSelection(.enabled)
@@ -60,15 +60,15 @@ struct AdvancedSettingsPane: View {
             }
         }
         .frame(minHeight: 220)
-        .confirmationDialog("Force Full Resync?", isPresented: $showResyncConfirm) {
-            Button("Resync All Bookmarks", role: .destructive) {
+        .confirmationDialog(String(localized: "dialog.resync.title"), isPresented: $showResyncConfirm) {
+            Button("dialog.resync.button", role: .destructive) {
                 Task {
                     await syncService.forceFullResync()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("settings.cancel", role: .cancel) {}
         } message: {
-            Text("This will re-download all bookmarks. This may take a while for large libraries.")
+            Text("dialog.resync.message")
         }
     }
     
@@ -91,8 +91,8 @@ struct AdvancedSettingsPane: View {
 func AdvancedSettingsPaneController() -> SettingsPane {
     let paneView = Settings.Pane(
         identifier: .advanced,
-        title: "Advanced",
-        toolbarIcon: NSImage(systemSymbolName: "wrench.and.screwdriver", accessibilityDescription: "Advanced settings")!
+        title: String(localized: "settings.advanced"),
+        toolbarIcon: NSImage(systemSymbolName: "wrench.and.screwdriver", accessibilityDescription: String(localized: "settings.advanced.accessibility"))!
     ) {
         AdvancedSettingsPane()
     }

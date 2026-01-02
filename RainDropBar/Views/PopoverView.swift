@@ -41,7 +41,7 @@ struct PopoverView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("Search bookmarks...", text: $searchText)
+                TextField("search.placeholder", text: $searchText)
                     .textFieldStyle(.plain)
                 
                 if !searchText.isEmpty {
@@ -91,12 +91,12 @@ struct PopoverView: View {
             Image(systemName: "key")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("No API Token")
+            Text("noToken.title")
                 .font(.headline)
-            Text("Configure your token in Settings")
+            Text("noToken.subtitle")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Button("Open Settings") {
+            Button("noToken.button") {
                 AppDelegate.shared?.showSettings()
             }
         }
@@ -108,9 +108,9 @@ struct PopoverView: View {
             Image(systemName: "tray")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("No bookmarks")
+            Text("empty.title")
                 .font(.headline)
-            Text("Your bookmarks will appear here after syncing")
+            Text("empty.subtitle")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

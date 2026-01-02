@@ -16,16 +16,16 @@ struct DatabaseErrorView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.yellow)
             
-            Text("Database Error")
+            Text("databaseError.title")
                 .font(.headline)
             
-            Text("Unable to initialize local storage. This may be due to a corrupted database or permissions issue.")
+            Text("databaseError.message")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            Button("Reset Database", role: .destructive) {
+            Button("databaseError.reset", role: .destructive) {
                 onReset()
             }
             .buttonStyle(.borderedProminent)

@@ -11,14 +11,14 @@ struct GeneralSettingsPane: View {
     
     var body: some View {
         Settings.Container(contentWidth: 450.0) {
-            Settings.Section(title: "API Token") {
+            Settings.Section(title: String(localized: "settings.apiToken")) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         if showToken {
-                            TextField("Test Token", text: $token)
+                            TextField("settings.apiToken.placeholder", text: $token)
                                 .textFieldStyle(.roundedBorder)
                         } else {
-                            SecureField("Test Token", text: $token)
+                            SecureField("settings.apiToken.placeholder", text: $token)
                                 .textFieldStyle(.roundedBorder)
                         }
                         
@@ -30,23 +30,23 @@ struct GeneralSettingsPane: View {
                         .buttonStyle(.borderless)
                     }
                     
-                    Text("Get your test token from [raindrop.io/settings/integrations](https://app.raindrop.io/settings/integrations)")
+                    Text("settings.apiToken.help")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
                     HStack {
-                        Button("Save") {
+                        Button("settings.save") {
                             saveToken()
                         }
                         .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         
-                        Button("Clear Token", role: .destructive) {
+                        Button("settings.clearToken", role: .destructive) {
                             clearToken()
                         }
                         .disabled(TokenManager.shared.token == nil)
                         
                         if saved {
-                            Text("Saved!")
+                            Text("settings.saved")
                                 .foregroundStyle(.green)
                                 .transition(.opacity)
                         }
@@ -54,7 +54,7 @@ struct GeneralSettingsPane: View {
                 }
             }
             
-            Settings.Section(title: "Sync") {
+            Settings.Section(title: String(localized: "settings.sync")) {
                 SyncProgressView()
             }
         }
@@ -99,11 +99,11 @@ struct SyncProgressView: View {
                     }
                 } else {
                     if let lastSync = syncService.lastSyncTime {
-                        Text("Last sync: \(lastSync, style: .relative) ago")
+                        Text("settings.lastSync \(lastSync, style: .relative)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("Never synced")
+                        Text("settings.neverSynced")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -123,7 +123,7 @@ struct SyncProgressView: View {
             }
             
             HStack {
-                Button("Sync Now") {
+                Button("settings.syncNow") {
                     Task {
                         await syncService.sync()
                     }
@@ -131,7 +131,7 @@ struct SyncProgressView: View {
                 .disabled(syncService.isSyncing || TokenManager.shared.token == nil)
                 
                 if syncService.canCancel {
-                    Button("Cancel") {
+                    Button("settings.cancel") {
                         syncService.cancelSync()
                     }
                 }
@@ -149,8 +149,8 @@ extension Settings.PaneIdentifier {
 func GeneralSettingsPaneController() -> SettingsPane {
     let paneView = Settings.Pane(
         identifier: .general,
-        title: "General",
-        toolbarIcon: NSImage(systemSymbolName: "gearshape", accessibilityDescription: "General settings")!
+        title: String(localized: "settings.general"),
+        toolbarIcon: NSImage(systemSymbolName: "gearshape", accessibilityDescription: String(localized: "settings.general.accessibility"))!
     ) {
         GeneralSettingsPane()
     }

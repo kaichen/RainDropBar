@@ -44,7 +44,7 @@ struct StatusBar: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                 } else {
-                    Text("Not synced")
+                    Text("status.notSynced")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -61,10 +61,10 @@ struct StatusBar: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(syncService.isSyncing)
-                .help("Sync now")
+                .help(String(localized: "status.syncNow"))
                 
                 Menu {
-                    Button("Settings") {
+                    Button("menu.settings") {
                         debugLog(.ui, "StatusBar: Settings menu item tapped")
                         DispatchQueue.main.async {
                             debugLog(.ui, "StatusBar: calling onSettings() async")
@@ -72,20 +72,20 @@ struct StatusBar: View {
                         }
                     }
                     
-                    Button("About") {
+                    Button("menu.about") {
                         showAboutAlert()
                     }
                     
                     Divider()
                     
-                    Button("Quit") {
+                    Button("menu.quit") {
                         NSApp.terminate(nil)
                     }
                 } label: {
                     Image(systemName: "gearshape")
                 }
                 .menuStyle(.borderlessButton)
-                .help("Settings")
+                .help(String(localized: "menu.settings"))
             }
             .fixedSize()
         }
@@ -104,11 +104,11 @@ private extension StatusBar {
         let repoURL = URL(string: repoURLString)
         
         let alert = NSAlert()
-        alert.messageText = "About \(name)"
-        alert.informativeText = "Version \(version) (\(build))\nRepository: \(repoURLString)"
+        alert.messageText = String(format: NSLocalizedString("about.title", comment: ""), name)
+        alert.informativeText = String(format: NSLocalizedString("about.version", comment: ""), version, build) + "\n" + String(format: NSLocalizedString("about.repository", comment: ""), repoURLString)
         alert.alertStyle = .informational
         alert.icon = NSApp.applicationIconImage
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: NSLocalizedString("about.ok", comment: ""))
         
         if let repoURL {
             alert.accessoryView = makeRepoAccessoryView(repoURL: repoURL, repoURLString: repoURLString)
@@ -125,10 +125,10 @@ private extension StatusBar {
         stack.spacing = 8
         
         let iconButton = RepoLinkButton(repoURL: repoURL, image: NSApp.applicationIconImage)
-        iconButton.toolTip = "在浏览器打开仓库"
+        iconButton.toolTip = NSLocalizedString("about.openRepo", comment: "")
         
         let linkButton = RepoLinkButton(repoURL: repoURL, title: repoURLString)
-        linkButton.toolTip = "在浏览器打开仓库"
+        linkButton.toolTip = NSLocalizedString("about.openRepo", comment: "")
         
         stack.addArrangedSubview(iconButton)
         stack.addArrangedSubview(linkButton)
