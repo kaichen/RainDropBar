@@ -125,7 +125,8 @@ struct PopoverView: View {
                 ForEach(filteredRaindrops) { raindrop in
                     RaindropRow(
                         raindrop: raindrop,
-                        collectionTitle: collectionsMap[raindrop.collectionID]
+                        collectionTitle: collectionsMap[raindrop.collectionID],
+                        onOpen: dismissPopover
                     )
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -136,6 +137,13 @@ struct PopoverView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func dismissPopover() {
+        let popoverWindows = NSApp.windows.filter { $0.level == .popUpMenu || $0.styleMask.contains(.borderless) }
+        for window in popoverWindows {
+            window.orderOut(nil)
         }
     }
 }

@@ -11,36 +11,62 @@ import SwiftData
 struct RaindropRow: View {
     let raindrop: Raindrop
     let collectionTitle: String?
+    var onOpen: (() -> Void)?
+    
+    private var hasMetadata: Bool {
+        collectionTitle != nil || !raindrop.tags.isEmpty
+    }
     
     var body: some View {
-        HStack(spacing: 10) {
-            // Type icon
+        HStack(alignment: .top, spacing: 10) {
             Image(systemName: raindrop.important ? "star.fill" : TypeIcon.systemName(for: raindrop.type))
                 .foregroundStyle(raindrop.important ? .yellow : .secondary)
-                .frame(width: 20)
+                .font(.system(size: 14))
+                .frame(width: 20, height: 20)
+                .padding(.top, 1)
             
-            VStack(alignment: .leading, spacing: 2) {
-                // Title
+            VStack(alignment: .leading, spacing: 4) {
                 Text(raindrop.title)
                     .lineLimit(1)
                     .font(.body)
                 
-                // Subtitle: domain · collection
-                HStack(spacing: 4) {
-                    Text(raindrop.domain)
-                        .lineLimit(1)
-                    
-                    if let collection = collectionTitle {
-                        Text("·")
-                        Text(collection)
-                            .lineLimit(1)
+                Text(raindrop.domain)
+                    .lineLimit(1)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                if hasMetadata {
+                    HStack(spacing: 6) {
+                        if let collection = collectionTitle {
+                            Label(collection, systemImage: "folder")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.quaternary, in: Capsule())
+                                .lineLimit(1)
+                        }
+                        
+                        ForEach(raindrop.tags.prefix(3), id: \.self) { tag in
+                            Text("#\(tag)")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.blue.opacity(0.1), in: Capsule())
+                                .lineLimit(1)
+                        }
+                        
+                        if raindrop.tags.count > 3 {
+                            Text("+\(raindrop.tags.count - 3)")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
             
-            Spacer()
+            Spacer(minLength: 0)
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -54,6 +80,11 @@ struct RaindropRow: View {
               ["http", "https"].contains(scheme) else {
             return
         }
-        NSWorkspace.shared.open(url)
+        
+        onOpen?()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
