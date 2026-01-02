@@ -49,7 +49,11 @@ struct RaindropRow: View {
     }
     
     private func openURL() {
-        guard let url = URL(string: raindrop.link) else { return }
+        guard let url = URL(string: raindrop.link),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme) else {
+            return
+        }
         NSWorkspace.shared.open(url)
     }
 }

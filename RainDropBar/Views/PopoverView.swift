@@ -80,8 +80,15 @@ struct PopoverView: View {
         }
         .frame(width: 320, height: 480)
         .onAppear {
+            debugLog(.ui, "PopoverView appeared")
+            debugLog(.ui, "Raindrops count: \(raindrops.count), Collections count: \(collections.count)")
+            
             syncService.configure(modelContext: modelContext)
-            if TokenManager.shared.hasToken {
+            let hasToken = TokenManager.shared.hasToken
+            debugLog(.ui, "Token present: \(hasToken)")
+            
+            if hasToken {
+                debugLog(.ui, "Triggering initial sync")
                 Task {
                     try? await syncService.sync()
                 }

@@ -47,6 +47,27 @@ struct RaindropAPI {
         return allRaindrops
     }
     
+    func getRecentRaindrops(limit: Int = 1000) async throws -> [RaindropResponse] {
+        var results: [RaindropResponse] = []
+        var page = 0
+        let perPage = 50
+        
+        debugLog(.api, "Fetching recent raindrops with limit: \(limit)")
+        
+        while results.count < limit {
+            let response = try await getRaindrops(page: page, perPage: perPage)
+            results.append(contentsOf: response.items)
+            debugLog(.api, "Page \(page): fetched \(response.items.count) items, total: \(results.count)")
+            
+            if response.items.count < perPage { break }
+            page += 1
+        }
+        
+        let finalResults = Array(results.prefix(limit))
+        debugLog(.api, "getRecentRaindrops completed: \(finalResults.count) items")
+        return finalResults
+    }
+    
     // MARK: - Private
     
     private func request<T: Decodable>(_ path: String) async throws -> T {
@@ -129,7 +150,12 @@ struct CollectionResponse: Decodable {
 
 struct RaindropsResponse: Decodable {
     let items: [RaindropResponse]
-    let count: Int
+    let count: Int?
+    let result: Bool?
+    
+    var itemCount: Int {
+        count ?? items.count
+    }
 }
 
 struct RaindropResponse: Decodable {

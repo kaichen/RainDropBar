@@ -17,9 +17,32 @@ struct StatusBar: View {
             if syncService.isSyncing {
                 ProgressView()
                     .scaleEffect(0.6)
-                Text("Syncing...")
+                if let progress = syncService.syncProgress {
+                    Text(progress)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Syncing...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else if syncService.isBackgroundSyncing {
+                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                    .symbolEffect(.pulse)
+                Text("Loading more...")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } else if let error = syncService.error {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Text(error.localizedDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .help(error.localizedDescription)
             } else if let lastSync = syncService.lastSyncTime {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .font(.caption)
