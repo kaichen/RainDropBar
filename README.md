@@ -2,6 +2,8 @@
 
 A macOS menubar app for quick access to your [Raindrop.io](https://raindrop.io) bookmarks.
 
+<img src="screenshot.png" alt="RainDrop menu screenshot" width="520" />
+
 ## Features
 
 - Syncs bookmarks from Raindrop.io to local storage
@@ -12,8 +14,8 @@ A macOS menubar app for quick access to your [Raindrop.io](https://raindrop.io) 
 
 ## Requirements
 
-- macOS 14.0+
-- Xcode 15+
+- macOS 26.0+
+- Xcode 26+
 - Raindrop.io API token ([get one here](https://app.raindrop.io/settings/integrations))
 
 ## Setup
