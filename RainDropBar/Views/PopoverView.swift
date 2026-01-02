@@ -71,7 +71,8 @@ struct PopoverView: View {
             
             // Status bar
             StatusBar(syncService: syncService, onSettings: {
-                (NSApp.delegate as? AppDelegate)?.showSettings()
+                debugLog(.ui, "PopoverView: onSettings tapped, NSApp.delegate=\(String(describing: NSApp.delegate)), AppDelegate.shared=\(String(describing: AppDelegate.shared))")
+                AppDelegate.shared?.showSettings()
             }, onSync: {
                 Task {
                     try? await syncService.sync()
@@ -96,7 +97,7 @@ struct PopoverView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Button("Open Settings") {
-                (NSApp.delegate as? AppDelegate)?.showSettings()
+                AppDelegate.shared?.showSettings()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

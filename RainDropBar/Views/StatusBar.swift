@@ -65,7 +65,11 @@ struct StatusBar: View {
                 
                 Menu {
                     Button("Settings") {
-                        onSettings()
+                        debugLog(.ui, "StatusBar: Settings menu item tapped")
+                        DispatchQueue.main.async {
+                            debugLog(.ui, "StatusBar: calling onSettings() async")
+                            onSettings()
+                        }
                     }
                     
                     Button("About") {
